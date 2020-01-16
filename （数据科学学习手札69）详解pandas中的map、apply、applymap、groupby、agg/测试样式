@@ -1,0 +1,181 @@
+# !/usr/bin/env Python3
+# -*- coding: utf-8 -*-
+# @Author   : zsc
+# @FILE     : test1.py
+# @Time     : 2020/1/14 18:12
+# @Software : PyCharm
+
+import pandas as pd
+
+# TODO 一、非聚合类方法
+
+# TODO 2.1 map()
+# 读入数据
+data = pd.read_csv("data.csv")
+
+print(data.head())
+print("\n===================================")
+
+# 查看各列数据类型、数据框行列数
+# print(data.dtypes)
+# print(data.shape)
+
+# 定义F->女性，M->男性的映射字典
+gender2xb = {'F': '女性', 'M': '男性'}
+
+# 利用 map()方法得到对应gender列的映射列
+data.gender = data.gender.map(gender2xb)
+
+print(data.head())
+print("\n===================================")
+
+# TODO 2.2 lambda函数
+
+# 读入数据
+data = pd.read_csv("data.csv")
+# 因为已经知道数据gender列性别中只有F和M所以编写如下lambda函数
+data.gender = data.gender.map(lambda x: 'woman' if x is 'F' else 'man')
+
+print(data.head())
+print("\n===================================")
+
+# TODO 2.3 常规函数
+
+# 读入数据
+data = pd.read_csv("data.csv")
+
+
+def gender_to_xb(x):
+    return '女性100' if x is 'F' else '男性100'
+
+
+data.gender = data.gender.map(gender_to_xb)
+
+print(data.head())
+print("\n===================================")
+
+# TODO 2.4 特殊对象
+
+# 读入数据
+data = pd.read_csv("data.csv")
+
+# 对某一列进行修改
+data.gender = data.gender.map("This kid's gender is {}".format)
+
+print(data.head())
+print("\n===================================")
+
+# TODO 二、 apply()
+
+# 读入数据
+data = pd.read_csv("data.csv")
+
+# 单列数据处理
+data.gender = data.gender.apply(lambda x: '女性' if x is 'F' else '男性')
+
+print(data.head())
+print("\n===================================")
+
+# TODO 多列处理数据
+
+# 读入数据
+data = pd.read_csv("data.csv")
+data = data.head()
+
+
+def deal_more_line(year, name, gender, count):
+    year, count = str(year), str(count)
+    gender = '女性' if gender is 'F' else '男性'
+
+    return '在{}年，叫做{}性别为{}的新生儿有{}个。'.format(year, name, gender, count)
+
+
+#  多列处理数据
+data["gender"] = data.apply(lambda row: deal_more_line(row['year'], row['name'], row['gender'], row['count']), axis=1)
+print(data.head())
+
+data2 = data.apply(lambda row: deal_more_line(row['year'], row['name'], row['gender'], row['count']),
+                   axis=1).to_frame()  # 返回的是一个 Seriers to_frame() 方法会转化成一个 DataFrame
+print(data2.head())
+print(data2.index.tolist())
+print(data2.columns.tolist())
+print("\n===================================")
+
+# TODO 多列处理数据  2
+
+# 读入数据
+data = pd.read_csv("data.csv")
+data = data.head(100)
+
+data["name2"] = data.apply(lambda row: (row['name'][0], row['name'][1:]), axis=1)
+
+print(data.head())
+print("\n===================================")
+
+a, b = zip(*data.apply(lambda row: (row['name'][0], row['name'][1:]), axis=1))
+print(a[:10])
+print(b[:10])
+print("\n===================================")
+
+# TODO 三 结合tqdm给apply()过程添加进度条
+
+from tqdm import tqdm
+
+# 读入数据
+data = pd.read_csv("data.csv")
+data = data.head(100)
+
+
+def deal_more_line2(year, name, gender, count):
+    year, count = str(year), str(count)
+    gender = '女性' if gender is 'F' else '男性'
+
+    return '在{}年，叫做{}性别为{}的新生儿有{}个。'.format(year, name, gender, count)
+
+
+# 启动对紧跟着的apply过程的监视
+tqdm.pandas(desc='apply')
+data.progress_apply(lambda row: deal_more_line2(row['year'], row['name'], row['gender'], row['count']), axis=1)
+
+# TODO 结合tqdm_notebook()给apply()过程添加美观进度条
+from tqdm._tqdm_notebook import tqdm_notebook
+
+# 读入数据
+data = pd.read_csv("data.csv")
+data = data.head(100)
+
+tqdm_notebook.pandas(desc='apply')
+data.progress_apply(lambda row: deal_more_line2(row['year'], row['name'], row['gender'], row['count']), axis=1)
+
+# TODO applymap()  对所有的数据都生效
+
+# 读入数据
+data = pd.read_csv("data.csv")
+data = data.head(100)
+
+
+def lower_all_string(x):
+    if isinstance(x, str):
+        return x.lower()
+    else:
+        return x
+
+
+data = data.applymap(lower_all_string)
+
+print(data.head())
+print("\n===================================")
+
+# TODO 三、 聚合类方法
+
+# 3.1 利用groupby()进行分组
+
+# 读入数据
+data = pd.read_csv("data.csv")
+data = data.head(50)
+print("data", data)
+# 按照年份和性别对婴儿姓名数据进行分组
+groups = data.groupby(by=['year', 'gender'])
+
+# 查看groups类型
+type(groups)
